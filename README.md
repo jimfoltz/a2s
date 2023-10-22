@@ -10,7 +10,11 @@ further attempt is made. Many formats result in poor or unexpected models.
 Textures are not imported for any format. Scale is fixed and set to a larger value to
 over-come SketchUp's "small geometry" limitation.
 
-`.stl` and `.ply` files seem to work well, which was the original goal of the code.
+`.stl`, `.ply`, and `.obj` files generally convert well, which was the original goal of the code.
+
+`.dxf` files do not typically convert well if at all. The exceptions appear to
+be dxf's exported using `3DFACE` entities, and PolyFaceMesh variant of
+`POLYLINE` entiites.
 
 ## Usage
 
