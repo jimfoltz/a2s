@@ -1,7 +1,16 @@
 # a2s
 
-The __a2s__ command utilizes `assimp` to convert 3d mesh files to SketchUp files.  Textures are not imported for any format.
-See [here](https://github.com/assimp/assimp) for a list of formats supported by assimp.
+The __a2s__ command utilizes `assimp` to convert 3d mesh files to SketchUp files.
+
+See [here](https://assimp-docs.readthedocs.io/en/latest/about/introduction.html) for a list of formats supported by assimp.
+
+This is a basic converter which relies completely on the capabilities of
+`assimp` for the conversion.  If `assimp` can not handle the conversion, no
+further attempt is made. Many formats result in poor or unexpected models.
+Textures are not imported for any format. Scale is fixed and set to a larger value to
+over-come SketchUp's "small geometry" limitation.
+
+`.stl` and `.ply` files seem to work well, which was the original goal of the code.
 
 ## Usage
 
