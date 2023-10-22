@@ -4,9 +4,10 @@ setlocal
 set ASSIMP_SRC=%USERPROFILE%\Repos\assimp
 
 if [%1]==[-r] (
-rd /q/s assimp-build
-md assimp-build
+  rd /q/s assimp-build
 )
+
+md assimp-build 2>nul
 
 pushd assimp-build
 
