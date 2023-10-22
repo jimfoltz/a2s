@@ -2,3 +2,4 @@ build/
 assimp-build/
 *.exe
 *.dll
+*.zip
