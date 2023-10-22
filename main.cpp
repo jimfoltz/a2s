@@ -1,6 +1,7 @@
 #include <SketchUpAPI/SketchUp.h>
 
 #include <iostream>
+//#include <set>
 //#include <filesystem>
 
 #include <assimp/Importer.hpp>
@@ -28,19 +29,23 @@ std::string getfilename(std::string path)
 
 int main(int argc, char *argv[]) {
 
+  Assimp::Importer importer;
 
-  printf("ASSIMP Version %u.%u.%u\n", aiGetVersionMajor(), aiGetVersionMinor(), aiGetVersionPatch());
+  printf("Using assimp version %u.%u.%u\n", aiGetVersionMajor(), aiGetVersionMinor(), aiGetVersionPatch());
   if (argc < 2)
   {
     std::cout << "Usage: " << argv[0] << " file\n";
+    // std::string exts;
+    // importer.GetExtensionList(exts);
+    // std::cout << "supported extensionss:" << std::endl << exts;
     return 1;
   }
+
 
   const double Scale{ 39.3701 };
   // Log to STDERR in this case
   //Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE, aiDefaultLogStream_STDERR);
 
-  Assimp::Importer importer;
 
   std::string filename = argv[1];
   std::string basename = getfilename(filename);
