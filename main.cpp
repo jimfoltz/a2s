@@ -1,150 +1,160 @@
 #include <SketchUpAPI/SketchUp.h>
 
 #include <iostream>
+//#include <filesystem>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <assimp/DefaultLogger.hpp>
+#include <assimp/version.h>
 
 #include "output_sketchup_error.h"
 
+//namespace fs = std::filesystem;
 // #define SU_CALL(func) if ((func) != SU_ERROR_NONE) throw std::exception()
 
 // Quick debugging
 #define CHECK(r) if (r != SU_ERROR_NONE) { \
-	std::cout << "SU Error line: " << __LINE__ << "\n"; \
-	output_sketchup_error(r); return 1; }
+  std::cout << "SU Error line: " << __LINE__ << "\n"; \
+  output_sketchup_error(r); return 1; }
+
+std::string getfilename(std::string path)
+{
+  path = path.substr(path.find_last_of("/\\") + 1);
+  size_t dot_i = path.find_last_of('.');
+  return path.substr(0, dot_i);
+}
 
 int main(int argc, char *argv[]) {
 
-   if (argc < 2)
-   {
-      std::cout << "Usage: " << argv[0] << " file\n";
-      return 1;
-   }
 
-   const double Scale{ 39.3701 };
-   // Log to STDERR in this case
-   //Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE, aiDefaultLogStream_STDERR);
+  printf("ASSIMP Version %u.%u.%u\n", aiGetVersionMajor(), aiGetVersionMinor(), aiGetVersionPatch());
+  if (argc < 2)
+  {
+    std::cout << "Usage: " << argv[0] << " file\n";
+    return 1;
+  }
 
-   Assimp::Importer importer;
+  const double Scale{ 39.3701 };
+  // Log to STDERR in this case
+  //Assimp::DefaultLogger::create("", Assimp::Logger::VERBOSE, aiDefaultLogStream_STDERR);
 
-   std::string filename = argv[1];
-   std::string logname = filename + ".log";
-   Assimp::DefaultLogger::create(logname.c_str());
+  Assimp::Importer importer;
 
-   const aiScene *scene = importer.ReadFile(
-         filename,
-         aiProcess_JoinIdenticalVertices |
-         aiProcess_Triangulate |
-         aiProcess_ValidateDataStructure |
-         aiProcess_PreTransformVertices |
-         0
-         );
+  std::string filename = argv[1];
+  std::string basename = getfilename(filename);
+  //   std::string logname = filename + ".log";
+  //   Assimp::DefaultLogger::create(logname.c_str());
 
-   if (!scene)
-   {
-      std::cout << "An error occured: " << importer.GetErrorString() << "\n";
-      return 1;
-   }
+  const aiScene *scene = importer.ReadFile(
+      filename,
+      aiProcess_JoinIdenticalVertices |
+      aiProcess_Triangulate |
+      aiProcess_ValidateDataStructure |
+      aiProcess_PreTransformVertices |
+      0
+      );
 
-   // Setup the SketchUp API data structures.
+  if (!scene)
+  {
+    std::cout << "An error occured: " << importer.GetErrorString() << "\n";
+    return 1;
+  }
 
-   // Always initialize the API before using it
-   SUInitialize();
+  // Setup the SketchUp API data structures.
 
-   // Create the model
-   SUModelRef model = SU_INVALID;
-   SUResult res = SUModelCreate(&model);
-   CHECK(res);
+  // Always initialize the API before using it
+  SUInitialize();
 
-   // Get the entity container of the model
-   SUEntitiesRef entities = SU_INVALID;
-   res = SUModelGetEntities(model, &entities);
-   CHECK(res);
+  // Create the model
+  SUModelRef model = SU_INVALID;
+  SUResult res = SUModelCreate(&model);
+  CHECK(res);
 
-   //unsigned int mesh_index;
-   aiMesh *mesh;
-   unsigned int face_count = 0;
-   aiVector3D vertex;
+  // Get the entity container of the model
+  SUEntitiesRef entities = SU_INVALID;
+  res = SUModelGetEntities(model, &entities);
+  CHECK(res);
 
-   // Iterate each scene mesh
-   //for (unsigned int i = 0; i < root_node->mNumMeshes; i++) {
-   for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
+  //unsigned int mesh_index;
+  aiMesh *mesh;
+  unsigned int face_count = 0;
+  aiVector3D vertex;
 
-      mesh = scene->mMeshes[i];
-      face_count = mesh->mNumFaces;
+  // Iterate each scene mesh
+  //for (unsigned int i = 0; i < root_node->mNumMeshes; i++) {
+  for (unsigned int i = 0; i < scene->mNumMeshes; i++) {
 
-      // Create a new Group for each Mesh
-      SUGroupRef grp = SU_INVALID;
-      res = SUGroupCreate(&grp);
-      CHECK(res);
+	  mesh = scene->mMeshes[i];
+	  face_count = mesh->mNumFaces;
 
-      res = SUEntitiesAddGroup(entities, grp);
-      CHECK(res);
+	  // Create a new Group for each Mesh
+	  SUGroupRef grp = SU_INVALID;
+	  res = SUGroupCreate(&grp);
+	  CHECK(res);
 
-      SUEntitiesRef gents = SU_INVALID;
-      res = SUGroupGetEntities(grp, &gents);
-      CHECK(res);
+	  res = SUEntitiesAddGroup(entities, grp);
+	  CHECK(res);
 
-      SUGeometryInputRef geom_input = SU_INVALID;
-      res = SUGeometryInputCreate(&geom_input);
-      CHECK(res);
+	  SUEntitiesRef gents = SU_INVALID;
+	  res = SUGroupGetEntities(grp, &gents);
+	  CHECK(res);
 
-      SULoopInputRef outer_loop = SU_INVALID;
+	  SUGeometryInputRef geom_input = SU_INVALID;
+	  res = SUGeometryInputCreate(&geom_input);
+	  CHECK(res);
 
-      aiFace *faces = mesh->mFaces;
-      unsigned int v_i;
-      int c = 0;
-      for (size_t i = 0; i < face_count; i++) 
-      {
-         // std::cout << "Face " << i << " has " << faces[i].mNumIndices << " vertices.\n";
+	  SULoopInputRef outer_loop = SU_INVALID;
 
-         // Create a Loop for each face
-         res = SULoopInputCreate(&outer_loop);
+	  aiFace *faces = mesh->mFaces;
+	  unsigned int v_i;
+	  int c = 0;
+	  for (size_t i = 0; i < face_count; i++) {
+		  // std::cout << "Face " << i << " has " << faces[i].mNumIndices << " vertices.\n";
 
-         for (size_t j = 0; j < faces[i].mNumIndices; j++) 
-         {
-            v_i = faces[i].mIndices[j];
-            // std::cout << v_i << " ";
-            vertex = mesh->mVertices[v_i];
-            SUPoint3D pt;
-            pt.x = vertex.x * Scale;
-            pt.y = vertex.y * Scale;
-            pt.z = vertex.z * Scale;
+		  // Create a Loop for each face
+		  res = SULoopInputCreate(&outer_loop);
 
-            res = SUGeometryInputAddVertex(geom_input, &pt);
-            CHECK(res);
+		  for (size_t j = 0; j < faces[i].mNumIndices; j++) {
+			  v_i = faces[i].mIndices[j];
+			  // std::cout << v_i << " ";
+			  vertex = mesh->mVertices[v_i];
+			  SUPoint3D pt;
+			  pt.x = vertex.x * Scale;
+			  pt.y = vertex.y * Scale;
+			  pt.z = vertex.z * Scale;
 
-            res = SULoopInputAddVertexIndex(outer_loop, c);
-            CHECK(res);
-            c++;
-         }
-         res = SUGeometryInputAddFace(geom_input, &outer_loop, NULL);
-         CHECK(res);
-         SULoopInputRelease(&outer_loop);
-      }
-      res = SUEntitiesFill(entities, geom_input, true);
-      CHECK(res);
-      SUGeometryInputRelease(&geom_input);
-   }
+			  res = SUGeometryInputAddVertex(geom_input, &pt);
+			  CHECK(res);
 
-   std::string outname = (std::string)filename + ".skp";
-   std::cout << "Writing model...\n";
-   res = SUModelSaveToFileWithVersion(model, outname.c_str(), SUModelVersion::SUModelVersion_SU2016);
-   CHECK(res);
-   if (res == SU_ERROR_NONE)
-   {
-	   std::cout << "Success." << "\n";
-   }
+			  res = SULoopInputAddVertexIndex(outer_loop, c);
+			  CHECK(res);
+			  c++;
+		  }
+		  res = SUGeometryInputAddFace(geom_input, &outer_loop, NULL);
+		  CHECK(res);
+		  SULoopInputRelease(&outer_loop);
+	  }
+	  res = SUEntitiesFill(entities, geom_input, true);
+	  CHECK(res);
+	  SUGeometryInputRelease(&geom_input);
+  }
 
-   res = SUModelRelease(&model);
-   CHECK(res);
+  std::string outname = basename + ".skp";
+  std::cout << "Writing model...\n";
+  res = SUModelSaveToFileWithVersion(model, outname.c_str(), SUModelVersion::SUModelVersion_SU2016);
+  CHECK(res);
+  if (res == SU_ERROR_NONE) {
+	  std::cout << "Success." << "\n";
+  }
 
-   SUTerminate();
+  res = SUModelRelease(&model);
+  CHECK(res);
 
-   // ShellExecute(GetDesktopWindow(), "open", outname.c_str(), NULL, NULL, SW_SHOW);
-   // system("pause");
-   return 0;
+  SUTerminate();
+
+  // ShellExecute(GetDesktopWindow(), "open", outname.c_str(), NULL, NULL, SW_SHOW);
+  // system("pause");
+  return 0;
 }
