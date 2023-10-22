@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
   std::string outname = basename + ".skp";
   std::cout << "Writing model...\n";
-  res = SUModelSaveToFileWithVersion(model, outname.c_str(), SUModelVersion::SUModelVersion_SU2016);
+  res = SUModelSaveToFileWithVersion(model, outname.c_str(), SUModelVersion::SUModelVersion_SU8);
   CHECK(res);
   if (res == SU_ERROR_NONE) {
 	  std::cout << "Success." << "\n";
