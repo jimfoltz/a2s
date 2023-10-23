@@ -2,7 +2,7 @@ SHELL = cmd.exe
 
 
 # User defined variables:
-SKETCHUP_SDK = $(USERPROFILE)/SketchUp/SDK/latest
+SKETCHUP_SDK = $(USERPROFILE)\SketchUp\SDK\latest
 ASSIMP = $(USERPROFILE)/Repos/assimp
 
 
